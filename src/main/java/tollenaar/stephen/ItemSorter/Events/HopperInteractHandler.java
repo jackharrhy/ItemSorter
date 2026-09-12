@@ -52,9 +52,9 @@ public class HopperInteractHandler implements Listener {
 				if (event.getPlayer().getInventory().getItemInMainHand().getType() == Material.WRITABLE_BOOK) {
 					database.savePlayer(event.getPlayer().getUniqueId(), frameID);
 
+                    String token = plugin.getWebSessions().issue(event.getPlayer().getUniqueId(), frameID, null);
 					String url = plugin.getConfig().getString("URL")
-							+ plugin.getConfig().getString("initialPageResponse") + "?userCode="
-							+ event.getPlayer().getUniqueId().toString() + "&frameID=" + frameID;
+							+ plugin.getConfig().getString("initialPageResponse") + "?token=" + token;
 
 					event.getPlayer().sendMessage(Component.text("Click here to configure the hopper sorting")
 							.clickEvent(ClickEvent.openUrl(url)));
@@ -97,15 +97,14 @@ public class HopperInteractHandler implements Listener {
 
 						meta.pages(Text.legacy(book.toPages()));
 
+                        database.savePlayer(player.getUniqueId(), bookValue, true, null);
+                        String token = plugin.getWebSessions().issue(player.getUniqueId(), null, bookValue);
 						Component editPage = Component.text("To edit the configuration click here.")
 								.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
-										+ plugin.getConfig().getString("editPageResponse") + "?configData="
-										+ event.getPlayer().getUniqueId().toString()));
+										+ plugin.getConfig().getString("editPageResponse") + "?token=" + token));
 						meta.addPages(editPage);
 						replaceItem.setItemMeta(meta);
 						player.openBook(replaceItem);
-
-						database.savePlayer(player.getUniqueId(), book.toString(), true, null);
 						event.setCancelled(true);
                     } catch (ClassNotFoundException | IOException e) {
 						// no need for logging, if the item is a written book
@@ -117,7 +116,12 @@ public class HopperInteractHandler implements Listener {
 		}
 	}
 
-	// handling item frame place event
+    @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        plugin.getWebSessions().revoke(event.getPlayer().getUniqueId());
+        database.deleteEditHopper(event.getPlayer().getUniqueId());
+    }
+
 	@EventHandler
 	public void onItemFramePlaceEvent(HangingPlaceEvent event) {
 		if (event.getEntity().getType() == EntityType.ITEM_FRAME && event.getBlock().getType() == Material.HOPPER) {
@@ -176,15 +180,15 @@ public class HopperInteractHandler implements Listener {
 					Book book = Book.fromString(bookValue);
 					meta.pages(Text.legacy(book.toPages()));
 
+                    database.savePlayer(player.getUniqueId(), bookValue, false, hand);
+                    String token = plugin.getWebSessions().issue(player.getUniqueId(), null, bookValue);
 					Component editPage = Component.text("To edit the configuration click here.")
 							.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
-									+ plugin.getConfig().getString("editPageResponse") + "?configData="
-									+ event.getPlayer().getUniqueId().toString()));
+									+ plugin.getConfig().getString("editPageResponse") + "?token=" + token));
 
 					meta.addPages(editPage);
 					item.setItemMeta(meta);
 					player.getInventory().setItem(hand, item);
-					database.savePlayer(event.getPlayer().getUniqueId(), book.toString(), false, hand);
 				} catch (ClassNotFoundException | IOException e) {
 					// no need for logging, if the item is a written book and h
 					// lore, but is n

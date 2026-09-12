@@ -19,9 +19,7 @@
 
 
         <form method="POST" th:action="${postAction}">
-            <input type="hidden" th:value="${userCode}" name="userCode" />
-            <input type="hidden" th:value="${frameID}" name="frameID" />
-            <input type="hidden" th:value="${bookValue}" name="bookValue" />
+            <input type="hidden" th:value="${token}" name="token" />
 
             <div id="HopperInput" class="tabcontent">
                 <h2>Select all the items the hopper will accept</h2>
