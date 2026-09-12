@@ -79,7 +79,7 @@ public class HopperHandler implements Listener {
 
     private void handleJunction(InventoryMoveItemEvent event, Block hopper, Book book) {
         if (book.allowItem(((InventoryHolder) hopper.getRelative(BlockFace.DOWN).getState()).getInventory(),
-                event.getItem()) && !((org.bukkit.block.data.type.Hopper) hopper).isEnabled()) {
+                event.getItem()) && !((org.bukkit.block.data.type.Hopper) hopper.getBlockData()).isEnabled()) {
             event.setCancelled(true);
         }
     }
@@ -123,6 +123,9 @@ public class HopperHandler implements Listener {
             Frame linkedFrame = getFrameByHopperID(linkedHopperID);
             if (linkedFrame != null) {
                 linkedBook = Book.getBook(linkedFrame.getId());
+                if (linkedBook == null) {
+                    break; // nothing configured there, so it can't accept the item either
+                }
                 if (linkedBook.allowItem(event.getDestination(), event.getItem())) {
                     return; // Allow item and exit if allowed in linked hopper
                 } else {
@@ -146,7 +149,7 @@ public class HopperHandler implements Listener {
             return;
 
         Book book = Book.getBook(frame.getId());
-        if (book.hasRatio()) {
+        if (book != null && book.hasRatio()) {
             book.reverseRatioStep();
         }
     }
