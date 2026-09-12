@@ -1,6 +1,9 @@
 verboseLogging: false
 port: 7001
 URL: "http://localhost:7001/"
+# Path the web pages are served under, for example '/itemsorter'. When you set
+# one, end URL with the same path: "http://localhost:7001/itemsorter/".
+contextPath: '/'
 postConfigResponse: 'postHopperConfig'
 initialPageResponse: 'HopperConfig'
 editPageResponse: 'editHopperConfig'

@@ -18,6 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import io.javalin.Javalin;
+import io.javalin.core.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import tollenaar.stephen.ItemSorter.Commands.CommandsHandler;
@@ -114,15 +115,27 @@ public class ItemSorter extends JavaPlugin {
     public void startWebServer() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(ItemSorter.class.getClassLoader());
-        appItem = Javalin.create(javalinConfig -> {
-            javalinConfig.addStaticFiles("web", Location.CLASSPATH);
-            javalinConfig.showJavalinBanner = false;
-            javalinConfig.maxRequestSize = 30000L;
-        }).start(config.getInt("port"));
+        appItem = Javalin.create(javalinConfig -> configureWebServer(javalinConfig, config))
+                .start(config.getInt("port"));
 
         appItemInitalize();
 
         Thread.currentThread().setContextClassLoader(classLoader);
+    }
+
+    /**
+     * Web server settings, kept apart from starting the server so tests can use
+     * them. contextPath moves every page and asset under a prefix such as
+     * "/itemsorter"; Javalin normalizes missing or doubled slashes itself.
+     * 
+     * @param javalinConfig - the Javalin configuration to fill in.
+     * @param pluginConfig  - the plugin's config.yml.
+     */
+    static void configureWebServer(JavalinConfig javalinConfig, FileConfiguration pluginConfig) {
+        javalinConfig.addStaticFiles("web", Location.CLASSPATH);
+        javalinConfig.showJavalinBanner = false;
+        javalinConfig.maxRequestSize = 30000L;
+        javalinConfig.contextPath = pluginConfig.getString("contextPath", "/");
     }
 
     private void appItemInitalize() {
