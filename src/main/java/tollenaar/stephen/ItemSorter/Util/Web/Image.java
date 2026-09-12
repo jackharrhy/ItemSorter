@@ -2,7 +2,7 @@ package tollenaar.stephen.ItemSorter.Util.Web;
 
 import java.awt.image.BufferedImage;
 
-import org.apache.commons.lang3.text.WordUtils;
+import tollenaar.stephen.ItemSorter.Util.Text;
 
 public final class Image {
 	
@@ -12,7 +12,7 @@ public final class Image {
 	
 	public Image(String src, BufferedImage img) {
 		this.setSrc(src);
-		this.setName(WordUtils.capitalizeFully(src.toLowerCase().replace("_", " ").split("/")[2].replace(".png", "")));
+		this.setName(Text.capitalizeFully(src.toLowerCase().replace("_", " ").split("/")[2].replace(".png", "")));
 		this.setImg(img);
 	}
 

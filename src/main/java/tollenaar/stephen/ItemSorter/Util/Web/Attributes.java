@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
+
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import tollenaar.stephen.ItemSorter.Util.Text;
 
 public class Attributes {
 
@@ -23,15 +26,15 @@ public class Attributes {
         this.containers = containers;
 
         this.enchantments = new ArrayList<>();
-        for (Enchantment ent : Enchantment.values()) {
+        for (Enchantment ent : RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)) {
             enchantments.add(new Item(ent.hashCode(), 1, ent.getKey().getKey(),
-                    WordUtils.capitalizeFully(ent.getKey().getKey().replace("_", " "))));
+                    Text.capitalizeFully(ent.getKey().getKey().replace("_", " "))));
         }
 
         this.potions = new ArrayList<>();
-        for (PotionEffectType pot : PotionEffectType.values()) {
-            potions.add(new Item(pot.hashCode(), 1, pot.getName(),
-                    WordUtils.capitalizeFully(pot.getName().replace("_", " "))));
+        for (PotionEffectType pot : RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)) {
+            potions.add(new Item(pot.hashCode(), 1, pot.getKey().getKey(),
+                    Text.capitalizeFully(pot.getKey().getKey().replace("_", " "))));
         }
     }
 

@@ -9,7 +9,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +21,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.EventExecutor;
@@ -120,12 +124,50 @@ public class EventExceptionHandler {
         }
 
         // Create normal listeners
-        for (Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : plugin.getPluginLoader()
-                .createRegisteredListeners(listener, plugin).entrySet()) {
+        for (Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : createRegisteredListeners(listener,
+                plugin).entrySet()) {
 
             // Wrap these listeners in our exception handler
             getHandlerList(entry.getKey()).registerAll(wrapAll(entry.getValue(), handler));
         }
+    }
+
+    /**
+     * Build a registered listener for every @EventHandler method on the given
+     * listener. Replaces PluginLoader.createRegisteredListeners, which Bukkit
+     * marked for removal.
+     * 
+     * @param listener - a class of event handlers.
+     * @param plugin   - the current plugin.
+     * @return The registered listeners, grouped by the event they handle.
+     */
+    private static Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners(Listener listener,
+            Plugin plugin) {
+        Map<Class<? extends Event>, Set<RegisteredListener>> registered = new HashMap<>();
+
+        Set<Method> methods = new HashSet<>();
+        Collections.addAll(methods, listener.getClass().getMethods());
+        Collections.addAll(methods, listener.getClass().getDeclaredMethods());
+
+        for (Method method : methods) {
+            EventHandler annotation = method.getAnnotation(EventHandler.class);
+            if (annotation == null || method.isBridge() || method.isSynthetic() || method.getParameterCount() != 1) {
+                continue;
+            }
+
+            Class<?> parameter = method.getParameterTypes()[0];
+            if (!Event.class.isAssignableFrom(parameter)) {
+                continue;
+            }
+
+            Class<? extends Event> eventClass = parameter.asSubclass(Event.class);
+            method.setAccessible(true);
+
+            registered.computeIfAbsent(eventClass, key -> new HashSet<>())
+                    .add(new RegisteredListener(listener, EventExecutor.create(method, eventClass),
+                            annotation.priority(), plugin, annotation.ignoreCancelled()));
+        }
+        return registered;
     }
 
     /**

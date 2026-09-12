@@ -3,6 +3,7 @@ package tollenaar.stephen.ItemSorter.Core;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,13 +18,29 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import tollenaar.stephen.ItemSorter.Util.Server.Book;
 import tollenaar.stephen.ItemSorter.Util.Server.EditConfig;
 import tollenaar.stephen.ItemSorter.Util.Server.Frame;
+import tollenaar.stephen.ItemSorter.Util.Text;
 
 public class HopperConfiguring {
     private final Database database;
     private final ItemSorter plugin;
+
+	// Registry lookups replacing the deprecated Enchantment.getByKey and
+	// PotionEffectType.getByName. Values come from the web form, so fold the
+	// case before building a key rather than letting NamespacedKey throw.
+	private static Enchantment enchantment(String value) {
+		return RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
+				.get(NamespacedKey.minecraft(value.toLowerCase(Locale.ROOT)));
+	}
+
+	private static PotionEffectType potionEffect(String value) {
+		return RegistryAccess.registryAccess().getRegistry(RegistryKey.MOB_EFFECT)
+				.get(NamespacedKey.minecraft(value.toLowerCase(Locale.ROOT)));
+	}
 
 	public HopperConfiguring(ItemSorter plugin) {
 		this.plugin = plugin;
@@ -46,10 +63,10 @@ public class HopperConfiguring {
 			String value = formParams.get(key).get(0);
 			if (key.contains("input_") && Material.matchMaterial(value) != null) {
 				book.addInputConfig(Material.matchMaterial(value));
-			} else if (key.contains("enchantment_") && Enchantment.getByKey(NamespacedKey.minecraft(value)) != null) {
-				book.addEnchantment(Enchantment.getByKey(NamespacedKey.minecraft(value)));
-			} else if (key.contains("potion_") && PotionEffectType.getByName(value) != null) {
-				book.addPotion(PotionEffectType.getByName(value));
+			} else if (key.contains("enchantment_") && enchantment(value) != null) {
+				book.addEnchantment(enchantment(value));
+			} else if (key.contains("potion_") && potionEffect(value) != null) {
+				book.addPotion(potionEffect(value));
 			}
 		}
         book.setStrictMode(formParams.keySet().contains("strict_mode"));
@@ -74,7 +91,7 @@ public class HopperConfiguring {
 		meta.setTitle("HopperConfiguration");
 		meta.setAuthor("ItemSorter");
 
-		meta.setPages(book.toPages());
+		meta.pages(Text.legacy(book.toPages()));
 
 		// changing the item frame item
 		NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
@@ -100,10 +117,10 @@ public class HopperConfiguring {
 			String value = formParams.get(key).get(0);
 			if (key.contains("input_") && Material.matchMaterial(value) != null) {
 				book.addInputConfig(Material.matchMaterial(value));
-			} else if (key.contains("enchantment_") && Enchantment.getByKey(NamespacedKey.minecraft(value)) != null) {
-				book.addEnchantment(Enchantment.getByKey(NamespacedKey.minecraft(value)));
-			} else if (key.contains("potion_") && PotionEffectType.getByName(value) != null) {
-				book.addPotion(PotionEffectType.getByName(value));
+			} else if (key.contains("enchantment_") && enchantment(value) != null) {
+				book.addEnchantment(enchantment(value));
+			} else if (key.contains("potion_") && potionEffect(value) != null) {
+				book.addPotion(potionEffect(value));
 			}
 		}
         book.setStrictMode(formParams.keySet().contains("strict_mode"));
@@ -133,7 +150,7 @@ public class HopperConfiguring {
 		NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
 		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
 
-		meta.setPages(book.toPages());
+		meta.pages(Text.legacy(book.toPages()));
 		
 		// changing the item frame item
 		replaceItem.setItemMeta(meta);

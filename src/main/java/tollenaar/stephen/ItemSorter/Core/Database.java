@@ -27,13 +27,13 @@ import org.bukkit.persistence.PersistentDataType;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import tollenaar.stephen.ItemSorter.Util.Server.Book;
 import tollenaar.stephen.ItemSorter.Util.Server.EditConfig;
 import tollenaar.stephen.ItemSorter.Util.Server.Frame;
 import tollenaar.stephen.ItemSorter.Util.Server.Hopper;
+import tollenaar.stephen.ItemSorter.Util.Text;
 
 public final class Database {
 
@@ -605,18 +605,17 @@ public final class Database {
 							ItemStack item = fr.getItem();
 							BookMeta meta = (BookMeta) item.getItemMeta();
 
-							if (!meta.getPage(meta.getPageCount()).contains("To edit the configuration click here.")) {
+							if (!Text.legacy(meta.page(meta.getPageCount()))
+									.contains("To edit the configuration click here.")) {
 
-								Book book = Book.fromString(meta.getLore().get(0).replace("§", ""));
+								Book book = Book.fromString(Text.legacy(meta.lore().get(0)).replace("§", ""));
 
-								BaseComponent[] editPage = new ComponentBuilder("To edit the configuration click here.")
-										.event(new ClickEvent(ClickEvent.Action.OPEN_URL,
-												plugin.getConfig().getString("URL")
-														+ plugin.getConfig().getString("editPageResponse")
-														+ "?configData=" + URLEncoder.encode(book.toString(), "UTF-8")))
-										.create();
+								Component editPage = Component.text("To edit the configuration click here.")
+										.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
+												+ plugin.getConfig().getString("editPageResponse")
+												+ "?configData=" + URLEncoder.encode(book.toString(), "UTF-8")));
 
-								meta.spigot().addPage(editPage);
+								meta.addPages(editPage);
 
 								// changing the item frame item
 								item.setItemMeta(meta);
@@ -676,8 +675,8 @@ public final class Database {
 									&& fr.getItem().getItemMeta().hasLore()) {
 								ItemStack item = fr.getItem();
 								ItemMeta meta = item.getItemMeta();
-								Book book = Book.fromString(meta.getLore().get(0).replace("§", ""));
-								meta.setLore(new ArrayList<>());
+								Book book = Book.fromString(Text.legacy(meta.lore().get(0)).replace("§", ""));
+								meta.lore(new ArrayList<>());
 								meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
 								item.setItemMeta(meta);
 								fr.setItem(item);
@@ -715,7 +714,7 @@ public final class Database {
 									&& fr.getItem().getItemMeta().hasLore()) {
 								ItemMeta meta = fr.getItem().getItemMeta();
 								Book book = Book.fromString(r.getString("bookValue"));
-								meta.setLore(new ArrayList<>());
+								meta.lore(new ArrayList<>());
 								meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
 								fr.getItem().setItemMeta(meta);
 							}

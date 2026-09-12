@@ -63,6 +63,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          # ubuntu-24.04 runners no longer ship ImageMagick.
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq imagemagick
+
           dest=src/main/resources/web/images/block
           work=$(mktemp -d)
 
@@ -80,7 +84,12 @@ jobs:
             [ "$base" = "${base,,}" ] || mv -- "$f" "$work/raw/${base,,}"
           done
 
-          mogrify -path "$dest" -resize "${ICON_SIZE}x${ICON_SIZE}" -strip "$work"/raw/*.png
+          # ImageMagick 7 exposes the tool as "magick mogrify", 6 as "mogrify".
+          if command -v magick >/dev/null 2>&1; then
+            magick mogrify -path "$dest" -resize "${ICON_SIZE}x${ICON_SIZE}" -strip "$work"/raw/*.png
+          else
+            mogrify -path "$dest" -resize "${ICON_SIZE}x${ICON_SIZE}" -strip "$work"/raw/*.png
+          fi
           rm -rf "$work"
 
           echo "$(find "$dest" -name '*.png' | wc -l) item icons at ${ICON_SIZE}px from mc-assets@$MC_ASSETS_REF" \

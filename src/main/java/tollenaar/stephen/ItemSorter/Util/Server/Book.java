@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -35,6 +34,7 @@ import org.bukkit.potion.PotionEffectType;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import tollenaar.stephen.ItemSorter.Util.Text;
 import tollenaar.stephen.ItemSorter.Util.Web.HopperItems;
 import tollenaar.stephen.ItemSorter.Util.Web.Ratio;
 
@@ -85,7 +85,18 @@ public final class Book implements Serializable {
     // checking if the item has the correct potion effect
     public boolean hasPotion(List<PotionEffect> potion) {
         for (PotionEffect pot : potion) {
-            if (potions.contains(pot.getType().getName())) {
+            if (containsPotion(pot.getType().getKey().getKey())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Configurations saved before the move to registry keys stored the old
+    // uppercase PotionEffectType names, so accept either spelling.
+    private boolean containsPotion(String key) {
+        for (String stored : potions) {
+            if (stored.equalsIgnoreCase(key)) {
                 return true;
             }
         }
@@ -121,12 +132,12 @@ public final class Book implements Serializable {
 
         // Enchantment filtering
         for (String ent : enchantments) {
-            tmpEnchantment.add(WordUtils.capitalizeFully(ent.replace("_", " ")));
+            tmpEnchantment.add(Text.capitalizeFully(ent.replace("_", " ")));
         }
 
         // Potion filtering
         for (String pot : potions) {
-            tmpPotion.add(WordUtils.capitalizeFully(pot.replace("_", " ")));
+            tmpPotion.add(Text.capitalizeFully(pot.replace("_", " ")));
         }
 
         // setting the pageBuilder
@@ -216,7 +227,7 @@ public final class Book implements Serializable {
     }
 
     private String getDisplayName(Material material) {
-        return WordUtils.capitalizeFully(material.name().toLowerCase().replace("_", " "));
+        return Text.capitalizeFully(material.name().toLowerCase().replace("_", " "));
     }
 
     public void addInputConfig(Material material) {
@@ -228,7 +239,7 @@ public final class Book implements Serializable {
     }
 
     public void addPotion(PotionEffectType potion) {
-        this.potions.add(potion.getName());
+        this.potions.add(potion.getKey().getKey());
     }
 
     public void emptyInputConfig() {

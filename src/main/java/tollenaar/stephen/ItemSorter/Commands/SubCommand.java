@@ -1,12 +1,14 @@
 package tollenaar.stephen.ItemSorter.Commands;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
 import tollenaar.stephen.ItemSorter.Core.ItemSorter;
 
 public abstract class SubCommand {
+
+	// The legacy section sign that Bukkit's deprecated ChatColor.COLOR_CHAR held.
+	private static final char COLOR_CHAR = '\u00A7';
 
 	protected ItemSorter plugin;
 
@@ -19,7 +21,7 @@ public abstract class SubCommand {
 	protected String convertToInvisibleString(String s) {
 		StringBuilder hidden = new StringBuilder();
 		for (char c : s.toCharArray())
-			hidden.append(ChatColor.COLOR_CHAR + "" + c);
+			hidden.append(COLOR_CHAR).append(c);
 		return hidden.toString();
 	}
 }

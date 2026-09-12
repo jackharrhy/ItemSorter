@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.lang3.text.WordUtils;
+import tollenaar.stephen.ItemSorter.Util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -83,7 +83,7 @@ public class ItemSorter extends JavaPlugin {
                         try {
                             ItemStack t = new ItemStack(Material.matchMaterial(name));
                             tmp.add(new Item(en.hashCode(), t.getMaxStackSize(), name,
-                                    WordUtils.capitalizeFully(name.toLowerCase().replace("_", " "))));
+                                    Text.capitalizeFully(name.toLowerCase().replace("_", " "))));
                         } catch (Exception e) {
                             // The icon set covers newer Minecraft versions too, so a
                             // few names won't resolve here. Counted, not spammed.

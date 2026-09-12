@@ -20,13 +20,12 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import tollenaar.stephen.ItemSorter.Core.Database;
 import tollenaar.stephen.ItemSorter.Core.ItemSorter;
 import tollenaar.stephen.ItemSorter.Util.Server.Book;
+import tollenaar.stephen.ItemSorter.Util.Text;
 
 public class HopperInteractHandler implements Listener {
     private final Database database;
@@ -56,9 +55,8 @@ public class HopperInteractHandler implements Listener {
 							+ plugin.getConfig().getString("initialPageResponse") + "?userCode="
 							+ event.getPlayer().getUniqueId().toString() + "&frameID=" + frameID;
 
-					TextComponent text = new TextComponent("Click here to configure the hopper sorting");
-					text.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
-					event.getPlayer().sendMessage(text);
+					event.getPlayer().sendMessage(Component.text("Click here to configure the hopper sorting")
+							.clickEvent(ClickEvent.openUrl(url)));
 
 					// when replacing a configured book into an item frame
 				} else if (event.getPlayer().getInventory().getItemInMainHand().getType() == Material.WRITTEN_BOOK) {
@@ -96,15 +94,13 @@ public class HopperInteractHandler implements Listener {
 						meta.setTitle("HopperConfiguration");
 						meta.setAuthor("ItemSorter");
 
-						meta.setPages(book.toPages());
+						meta.pages(Text.legacy(book.toPages()));
 
-						BaseComponent[] editPage = new ComponentBuilder("To edit the configuration click here.")
-								.event(new ClickEvent(ClickEvent.Action.OPEN_URL,
-										plugin.getConfig().getString("URL")
-												+ plugin.getConfig().getString("editPageResponse") + "?configData="
-												+ event.getPlayer().getUniqueId().toString()))
-								.create();
-						meta.spigot().addPage(editPage);
+						Component editPage = Component.text("To edit the configuration click here.")
+								.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
+										+ plugin.getConfig().getString("editPageResponse") + "?configData="
+										+ event.getPlayer().getUniqueId().toString()));
+						meta.addPages(editPage);
 						replaceItem.setItemMeta(meta);
 						player.openBook(replaceItem);
 
@@ -175,16 +171,14 @@ public class HopperInteractHandler implements Listener {
 				try {
 					Player player = event.getPlayer();
 					Book book = Book.fromString(bookValue);
-					meta.setPages(book.toPages());
+					meta.pages(Text.legacy(book.toPages()));
 
-					BaseComponent[] editPage = new ComponentBuilder("To edit the configuration click here.")
-							.event(new ClickEvent(ClickEvent.Action.OPEN_URL,
-									plugin.getConfig().getString("URL")
-											+ plugin.getConfig().getString("editPageResponse") + "?configData="
-											+ event.getPlayer().getUniqueId().toString()))
-							.create();
+					Component editPage = Component.text("To edit the configuration click here.")
+							.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
+									+ plugin.getConfig().getString("editPageResponse") + "?configData="
+									+ event.getPlayer().getUniqueId().toString()));
 
-					meta.spigot().addPage(editPage);
+					meta.addPages(editPage);
 					item.setItemMeta(meta);
 					player.getInventory().setItem(event.getHand(), item);
 					database.savePlayer(event.getPlayer().getUniqueId(), book.toString(), false, event.getHand());
