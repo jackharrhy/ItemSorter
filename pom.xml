@@ -17,7 +17,7 @@
         <paper.api.version>26.2.build.123-stable</paper.api.version>
         <java.release>25</java.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <output>output</output>
+        <output.directory>output</output.directory>
 	</properties>
 	<build>
 		<defaultGoal>clean package</defaultGoal>
@@ -62,8 +62,19 @@
 						</goals>
 						<configuration>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
-                            <outputFile>${output}/${project.name}-${revision}.jar</outputFile>
-							<outputDirectory>${output}</outputDirectory>
+                            <outputFile>${output.directory}/${project.name}-${revision}.jar</outputFile>
+							<outputDirectory>${output.directory}</outputDirectory>
+							<filters>
+								<filter>
+									<!-- Several dependencies ship their own module-info. It means
+									     nothing in a plugin jar loaded from the classpath. -->
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>module-info.class</exclude>
+										<exclude>META-INF/versions/*/module-info.class</exclude>
+									</excludes>
+								</filter>
+							</filters>
 						</configuration>
 
 					</execution>
@@ -85,6 +96,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.4.2</version>
 				<configuration>
 					<archive>
 						<manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>

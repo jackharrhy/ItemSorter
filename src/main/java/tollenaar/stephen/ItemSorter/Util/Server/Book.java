@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
+import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -42,6 +44,23 @@ public final class Book implements Serializable {
 
     private static final long serialVersionUID = 4519138450923555946L;
     private static final transient BiMap<Integer, Book> BOOKS = HashBiMap.create(); // mapped from frameID to
+
+    // Hopper configurations are stored as this class's serialized form, so it must
+    // not change. This names exactly the fields default serialization would write,
+    // producing byte-identical output, and tells javac the List fields are meant to
+    // be serialized. Keep it in sync when adding or removing a persisted field.
+    private static final ObjectStreamField[] serialPersistentFields = {
+            new ObjectStreamField("inputConfig", List.class),
+            new ObjectStreamField("enchantments", List.class),
+            new ObjectStreamField("potions", List.class),
+            new ObjectStreamField("strictMode", boolean.class),
+            new ObjectStreamField("preventOverflow", boolean.class),
+            new ObjectStreamField("linkedBelow", boolean.class),
+            new ObjectStreamField("ratio", Ratio.class) };
+
+    public static ObjectStreamField[] getSerialPersistentFields() {
+        return serialPersistentFields;
+    }
 
     private List<Material> inputConfig = new ArrayList<>(); // input sorting configure
     private List<String> enchantments = new ArrayList<>();
@@ -190,11 +209,14 @@ public final class Book implements Serializable {
 
         // prevents accepting an item if the next container in the system is full
         if (hasPreventOverflow()) {
-            Block hopper = inventory.getLocation().getBlock();
+            Location location = inventory.getLocation();
+            if (location == null) {
+                return false;
+            }
+            Block hopper = location.getBlock();
             BlockFace facing = ((Hopper) hopper.getBlockData()).getFacing();
             Block target = hopper.getRelative(facing);
-            if (target.getState() instanceof Container) {
-                Container t = (Container) target.getState();
+            if (target.getState() instanceof Container t) {
                 if (!hasRoom(t.getInventory(), item)) {
                     return false;
                 }
@@ -363,15 +385,14 @@ public final class Book implements Serializable {
 
         } catch (ClassNotFoundException e) {
             ois.close();
-            LegacyObjectInputStream lois = new LegacyObjectInputStream(new ByteArrayInputStream(data),
-                    "tollenaar.stephen.ItemSorter.Util.Book", "tollenaar.stephen.ItemSorter.Util.Server.Book");
-            try {
-                o = lois.readObject();
-            } catch (IOException ex) {
-                lois.close();
-                return null;
+            try (LegacyObjectInputStream lois = new LegacyObjectInputStream(new ByteArrayInputStream(data),
+                    "tollenaar.stephen.ItemSorter.Util.Book", "tollenaar.stephen.ItemSorter.Util.Server.Book")) {
+                try {
+                    o = lois.readObject();
+                } catch (IOException ex) {
+                    return null;
+                }
             }
-            lois.close();
             ((Book) o).checkSelf();
         }
         return (Book) o;

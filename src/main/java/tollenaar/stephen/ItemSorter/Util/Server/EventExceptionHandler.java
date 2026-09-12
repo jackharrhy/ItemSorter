@@ -86,7 +86,7 @@ public class EventExceptionHandler {
 
         @SuppressWarnings("unchecked")
         private static <E extends Throwable> void doThrowInner(Throwable e) throws E {
-            // TODO add logging to file/site
+            // Only reached when handle() couldn't write the log file, so let it propagate.
             throw (E) e;
         }
     }
@@ -163,9 +163,13 @@ public class EventExceptionHandler {
             Class<? extends Event> eventClass = parameter.asSubclass(Event.class);
             method.setAccessible(true);
 
-            registered.computeIfAbsent(eventClass, key -> new HashSet<>())
-                    .add(new RegisteredListener(listener, EventExecutor.create(method, eventClass),
-                            annotation.priority(), plugin, annotation.ignoreCancelled()));
+            Set<RegisteredListener> forEvent = registered.get(eventClass);
+            if (forEvent == null) {
+                forEvent = new HashSet<>();
+                registered.put(eventClass, forEvent);
+            }
+            forEvent.add(new RegisteredListener(listener, EventExecutor.create(method, eventClass),
+                    annotation.priority(), plugin, annotation.ignoreCancelled()));
         }
         return registered;
     }

@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -104,7 +105,7 @@ public final class Database {
 			ResultSet rs = pst.executeQuery();
 			rs.next();
 
-			new Hopper(rs);
+			Hopper.register(rs);
 			saveFrames(rs.getInt("id"), frameLocation);
 
 		} catch (SQLException e) {
@@ -150,7 +151,7 @@ public final class Database {
 			pst.setFloat(7, frameLocation.getPitch());
 			ResultSet rs = pst.executeQuery();
 			rs.next();
-			new Frame(rs);
+			Frame.register(rs);
 
 		} catch (SQLException e) {
 			Bukkit.getLogger().log(Level.SEVERE, e.toString());
@@ -232,7 +233,7 @@ public final class Database {
 			ResultSet rs = pst.executeQuery();
 
 			if (rs.next()) {
-				new Frame(rs);
+				Frame.register(rs);
 				return true;
 			}
 
@@ -298,7 +299,7 @@ public final class Database {
 			ResultSet rs = pst.executeQuery();
 
 			if (rs.next()) {
-				new Hopper(rs);
+				Hopper.register(rs);
 				return rs.getObject(field);
 			}
 
@@ -331,7 +332,7 @@ public final class Database {
 
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
-				Frame fr = new Frame(rs);
+				Frame fr = Frame.register(rs);
 				return fr;
 			}
 
@@ -368,7 +369,7 @@ public final class Database {
 
 			ResultSet rs = pst.executeQuery();
 			if (rs.next()) {
-				new Frame(rs);
+				Frame.register(rs);
 				return rs.getObject(field);
 			}
 
@@ -399,7 +400,7 @@ public final class Database {
 
 			ResultSet rs = pst.executeQuery();
 			if (rs.next()) {
-				new Frame(rs);
+				Frame.register(rs);
 				return rs.getObject(field);
 			}
 
@@ -536,7 +537,7 @@ public final class Database {
 
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
-				new Hopper(rs);
+				Hopper.register(rs);
 			}
 
 		} catch (SQLException e) {
@@ -560,7 +561,7 @@ public final class Database {
 			ResultSet rs = pst.executeQuery();
 			NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
 			while (rs.next()) {
-				Frame frame = new Frame(rs);
+				Frame frame = Frame.register(rs);
 				ItemFrame fr = frame.getEntityFrame();
 				if (fr != null && fr.getItem().getType() == Material.WRITTEN_BOOK && fr.getItem().getItemMeta()
 						.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
@@ -605,10 +606,11 @@ public final class Database {
 							ItemStack item = fr.getItem();
 							BookMeta meta = (BookMeta) item.getItemMeta();
 
-							if (!Text.legacy(meta.page(meta.getPageCount()))
+							List<Component> lore = meta.lore();
+							if (lore != null && !lore.isEmpty() && !Text.legacy(meta.page(meta.getPageCount()))
 									.contains("To edit the configuration click here.")) {
 
-								Book book = Book.fromString(Text.legacy(meta.lore().get(0)).replace("§", ""));
+								Book book = Book.fromString(Text.legacy(lore.get(0)).replace("§", ""));
 
 								Component editPage = Component.text("To edit the configuration click here.")
 										.clickEvent(ClickEvent.openUrl(plugin.getConfig().getString("URL")
@@ -669,13 +671,17 @@ public final class Database {
 						ResultSet r = ps.executeQuery();
 						NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
 						while (r.next()) {
-							Frame frame = new Frame(r);
+							Frame frame = Frame.register(r);
 							ItemFrame fr = frame.getEntityFrame();
 							if (fr != null && fr.getItem().getType() == Material.WRITTEN_BOOK
 									&& fr.getItem().getItemMeta().hasLore()) {
 								ItemStack item = fr.getItem();
 								ItemMeta meta = item.getItemMeta();
-								Book book = Book.fromString(Text.legacy(meta.lore().get(0)).replace("§", ""));
+								List<Component> lore = meta.lore();
+								if (lore == null || lore.isEmpty()) {
+									continue;
+								}
+								Book book = Book.fromString(Text.legacy(lore.get(0)).replace("§", ""));
 								meta.lore(new ArrayList<>());
 								meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
 								item.setItemMeta(meta);
@@ -708,7 +714,7 @@ public final class Database {
 							PreparedStatement p = getConnection()
 									.prepareStatement("SELECT * FROM `Frames` WHERE `id`=?;");
 							ResultSet rFrame = p.executeQuery();
-							Frame frame = new Frame(rFrame);
+							Frame frame = Frame.register(rFrame);
 							ItemFrame fr = frame.getEntityFrame();
 							if (fr != null && fr.getItem().getType() == Material.WRITTEN_BOOK
 									&& fr.getItem().getItemMeta().hasLore()) {

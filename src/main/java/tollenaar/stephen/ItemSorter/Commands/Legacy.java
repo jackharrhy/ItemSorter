@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 
+import net.kyori.adventure.text.Component;
 import tollenaar.stephen.ItemSorter.Core.ItemSorter;
 import tollenaar.stephen.ItemSorter.Util.Server.Book;
 import tollenaar.stephen.ItemSorter.Util.Text;
@@ -21,6 +22,7 @@ public class Legacy extends SubCommand {
 		super(plugin);
 	}
 
+    @Override
 	public void onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
 
@@ -29,7 +31,12 @@ public class Legacy extends SubCommand {
 				ItemStack item = player.getInventory().getItemInMainHand();
 				BookMeta meta = (BookMeta) item.getItemMeta();
 				try {
-                    Book book = Book.fromString(Text.legacy(meta.lore().get(0)).replace("§", ""));
+                    List<Component> lore = meta.lore();
+                    if (lore == null || lore.isEmpty()) {
+                        player.sendMessage("This is not a correct hopperconfiguration");
+                        return;
+                    }
+                    Book book = Book.fromString(Text.legacy(lore.get(0)).replace("§", ""));
 					List<String> loreList = new ArrayList<>();
 					// hidden value
 					loreList.add(convertToInvisibleString(book.toString()));

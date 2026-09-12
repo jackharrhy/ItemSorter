@@ -11,7 +11,7 @@ import tollenaar.stephen.ItemSorter.Core.ItemSorter;
 
 public class CommandsHandler implements CommandExecutor {
 
-	private static Map<String, SubCommand> commands = new HashMap<>();
+    private static final Map<String, SubCommand> commands = new HashMap<>();
 
 	public CommandsHandler(ItemSorter plugin) {
 		commands.put("legacy", new Legacy(plugin));

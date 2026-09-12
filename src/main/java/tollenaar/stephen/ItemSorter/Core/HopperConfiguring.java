@@ -154,12 +154,13 @@ public class HopperConfiguring {
 		
 		// changing the item frame item
 		replaceItem.setItemMeta(meta);
-		if (!editConfig.isHopper() && p.getInventory().getItem(editConfig.getSlot()).getType() == Material.WRITTEN_BOOK
-				&& p.getInventory().getItem(editConfig.getSlot()).getItemMeta().getPersistentDataContainer().has(key,
-						PersistentDataType.STRING)
-				&& p.getInventory().getItem(editConfig.getSlot()).getItemMeta().getPersistentDataContainer()
-						.get(key, PersistentDataType.STRING).equals(bookValue)) {
-			p.getInventory().getItem(editConfig.getSlot()).setItemMeta(meta);
+		// The player may have logged off since opening the edit page, and the slot may be empty.
+		ItemStack editedItem = editConfig.isHopper() || p == null ? null
+				: p.getInventory().getItem(editConfig.getSlot());
+		if (editedItem != null && editedItem.getType() == Material.WRITTEN_BOOK
+				&& bookValue.equals(editedItem.getItemMeta().getPersistentDataContainer().get(key,
+						PersistentDataType.STRING))) {
+			editedItem.setItemMeta(meta);
 		} else if (editConfig.isHopper() && Frame.getFRAME(book.getFrameID()) != null
 				&& Frame.getFRAME(book.getFrameID()).getEntityFrame() != null) {
 			Frame.getFRAME(book.getFrameID()).getEntityFrame().setItem(replaceItem);

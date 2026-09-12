@@ -15,6 +15,7 @@ import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -161,9 +162,11 @@ public class HopperInteractHandler implements Listener {
 
 	@EventHandler
 	public void onHopperEditEvent(PlayerInteractEvent event) {
-		if (event.hasItem() && event.getItem().getType() == Material.WRITTEN_BOOK) {
-			ItemStack item = event.getItem();
-			BookMeta meta = (BookMeta) event.getItem().getItemMeta();
+		ItemStack item = event.getItem();
+		// Physical interactions, like stepping on a pressure plate, have no hand.
+		EquipmentSlot hand = event.getHand();
+		if (item != null && hand != null && item.getType() == Material.WRITTEN_BOOK) {
+			BookMeta meta = (BookMeta) item.getItemMeta();
 			NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
 			PersistentDataContainer container = meta.getPersistentDataContainer();
 			if (container.has(key, PersistentDataType.STRING)) {
@@ -180,8 +183,8 @@ public class HopperInteractHandler implements Listener {
 
 					meta.addPages(editPage);
 					item.setItemMeta(meta);
-					player.getInventory().setItem(event.getHand(), item);
-					database.savePlayer(event.getPlayer().getUniqueId(), book.toString(), false, event.getHand());
+					player.getInventory().setItem(hand, item);
+					database.savePlayer(event.getPlayer().getUniqueId(), book.toString(), false, hand);
 				} catch (ClassNotFoundException | IOException e) {
 					// no need for logging, if the item is a written book and h
 					// lore, but is n

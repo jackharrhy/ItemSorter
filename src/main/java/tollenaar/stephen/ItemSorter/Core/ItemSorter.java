@@ -1,13 +1,7 @@
 package tollenaar.stephen.ItemSorter.Core;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -117,29 +111,13 @@ public class ItemSorter extends JavaPlugin {
         }
     }
 
-    private static void addSoftwareLibrary(File file)
-            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, MalformedURLException {
-        Method method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-        method.setAccessible(true);
-        method.invoke(ClassLoader.getSystemClassLoader(), new Object[] { file.toURI().toURL() });
-    }
-
     public void startWebServer() {
-
-        // try {
-        // addSoftwareLibrary(new File(getDataFolder().getAbsoluteFile() +
-        // File.separator + "lib" + File.separator
-        // + "websocket-server-9.4.46.v20220331.jar"));
-        // } catch (Exception e) {
-        // Bukkit.getLogger().log(Level.SEVERE, e.toString());
-        // }
-        //
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(ItemSorter.class.getClassLoader());
-        appItem = Javalin.create(config -> {
-            config.addStaticFiles("web", Location.CLASSPATH);
-            config.showJavalinBanner = false;
-            config.maxRequestSize = 30000L;
+        appItem = Javalin.create(javalinConfig -> {
+            javalinConfig.addStaticFiles("web", Location.CLASSPATH);
+            javalinConfig.showJavalinBanner = false;
+            javalinConfig.maxRequestSize = 30000L;
         }).start(config.getInt("port"));
 
         appItemInitalize();

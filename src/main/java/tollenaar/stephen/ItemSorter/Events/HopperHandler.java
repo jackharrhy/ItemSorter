@@ -26,7 +26,10 @@ public class HopperHandler implements Listener {
     @EventHandler
     public void onHopperInputEvent(InventoryMoveItemEvent event) {
         boolean junctionCancelled = false;
-        Block hopper = event.getSource().getLocation().getBlock();
+        Location source = event.getSource().getLocation();
+        if (source == null)
+            return;
+        Block hopper = source.getBlock();
         Location down = hopper.getRelative(BlockFace.DOWN).getLocation();
 
         // Handle hopper junctions and multiple items in the same inventory slot
@@ -45,8 +48,8 @@ public class HopperHandler implements Listener {
 
             // Handle junctions and disabled hoppers
             if (Hopper.isJunction(hopper) &&
-                    !event.getDestination().getLocation().equals(down)) {
-                handleJunction(event, hopper, down, book);
+                    !down.equals(event.getDestination().getLocation())) {
+                handleJunction(event, hopper, book);
                 return;
             }
 
@@ -74,7 +77,7 @@ public class HopperHandler implements Listener {
         return database.getSavedItemFrameByHopperID(hopperID, "id");
     }
 
-    private void handleJunction(InventoryMoveItemEvent event, Block hopper, Location down, Book book) {
+    private void handleJunction(InventoryMoveItemEvent event, Block hopper, Book book) {
         if (book.allowItem(((InventoryHolder) hopper.getRelative(BlockFace.DOWN).getState()).getInventory(),
                 event.getItem()) && !((org.bukkit.block.data.type.Hopper) hopper).isEnabled()) {
             event.setCancelled(true);
@@ -83,16 +86,17 @@ public class HopperHandler implements Listener {
 
     private void handleStandardItemFiltering(InventoryMoveItemEvent event, Block hopper, Book book,
             boolean junctionCancelled) {
-        if (event.getDestination().getLocation().getBlock().getType() != Material.HOPPER)
+        Location destination = event.getDestination().getLocation();
+        if (destination == null || destination.getBlock().getType() != Material.HOPPER)
             return;
 
-        Integer hopperID = getHopperID(event.getDestination().getLocation());
+        Integer hopperID = getHopperID(destination);
         if (hopperID == null)
             return;
 
         Frame frame = getFrameByHopperID(hopperID);
         if (frame == null) {
-            database.deleteHopper(event.getDestination().getLocation());
+            database.deleteHopper(destination);
             return;
         }
 
@@ -150,9 +154,10 @@ public class HopperHandler implements Listener {
     // this checks if the hopper can pick up an item and is not in strict mode.
     @EventHandler
     public void onHopperPickUpEvent(InventoryPickupItemEvent event) {
-        if (event.getInventory().getLocation().getBlock().getType() == Material.HOPPER) {
+        Location location = event.getInventory().getLocation();
+        if (location != null && location.getBlock().getType() == Material.HOPPER) {
             Integer hopperID = (Integer) database.getSavedHopperByLocation(
-                    event.getInventory().getLocation(),
+                    location,
                     "id");
             if (hopperID != null) {
                 Frame frame = database.getSavedItemFrameByHopperID(hopperID, "id");
