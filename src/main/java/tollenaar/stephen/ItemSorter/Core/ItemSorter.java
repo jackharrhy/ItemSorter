@@ -61,12 +61,12 @@ public class ItemSorter extends JavaPlugin {
         getCommand("ItemSorter").setExecutor(new CommandsHandler(this));
         // Iterating over all the image files which corresponds to the items in
         // minecraft
-        File plugins = Bukkit.getPluginManager().getPlugin("ItemSorter").getDataFolder().getParentFile();
-        File plugin = new File(plugins.getAbsolutePath() + "/ItemSorter.jar");
-        try (ZipFile jar = new ZipFile(plugin)) {
+        // Reading our own jar, whatever it got named (builds are ItemSorter-<mcversion>.jar)
+        try (ZipFile jar = new ZipFile(getFile())) {
             Enumeration<? extends ZipEntry> entries = jar.entries();
 
             List<Item> tmp = new ArrayList<>();
+            int unknown = 0;
             while (entries.hasMoreElements()) {
                 ZipEntry en = entries.nextElement();
                 if (en.getName().contains("images/block/") && en.getName().split("images/block/").length > 1) {
@@ -85,10 +85,15 @@ public class ItemSorter extends JavaPlugin {
                             tmp.add(new Item(en.hashCode(), t.getMaxStackSize(), name,
                                     WordUtils.capitalizeFully(name.toLowerCase().replace("_", " "))));
                         } catch (Exception e) {
-                            System.out.println("Error for fetching: " + name);
+                            // The icon set covers newer Minecraft versions too, so a
+                            // few names won't resolve here. Counted, not spammed.
+                            unknown++;
                         }
                     }
                 }
+            }
+            if (unknown > 0) {
+                getLogger().log(Level.INFO, "{0} item icons skipped, unknown to this Minecraft version", unknown);
             }
             attributes = new Attributes(tmp, new ArrayList<>());
         } catch (IOException e) {

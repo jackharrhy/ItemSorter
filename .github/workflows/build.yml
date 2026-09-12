@@ -1,0 +1,106 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Minecraft version this jar targets -- pom <revision>, also names the jar'
+        required: false
+        type: string
+        default: '26.2'
+      paper_api_version:
+        description: 'paper-api coordinate -- pom <paper.api.version>. 26.x is <mc>.build.<n>-stable, 1.x is <mc>-R0.1-SNAPSHOT'
+        required: false
+        type: string
+        default: '26.2.build.123-stable'
+      java_release:
+        description: 'Bytecode level the server must load -- pom <java.release>. 26.x needs 25, 1.20.5-1.21.x need 21, older need 17'
+        required: false
+        type: string
+        default: '25'
+  workflow_call:
+    inputs:
+      revision:
+        required: false
+        type: string
+        default: '26.2'
+      paper_api_version:
+        required: false
+        type: string
+        default: '26.2.build.123-stable'
+      java_release:
+        required: false
+        type: string
+        default: '25'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ItemSorter ${{ inputs.revision || '26.2' }}
+    runs-on: ubuntu-latest
+    env:
+      # push and pull_request carry no inputs, so repeat the defaults here.
+      REVISION: ${{ inputs.revision || '26.2' }}
+      PAPER_API_VERSION: ${{ inputs.paper_api_version || '26.2.build.123-stable' }}
+      JAVA_RELEASE: ${{ inputs.java_release || '25' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch item icons
+        env:
+          # Renders of every inventory item, named after the Bukkit Material
+          # constant. Pin a commit SHA here for reproducible icon sets.
+          MC_ASSETS_REF: main
+          # Displayed at 32px by web/css/options.css; 64 keeps HiDPI screens
+          # sharp. Drop to 32 for a smaller jar, raise to 256 for the originals.
+          ICON_SIZE: '64'
+        run: |
+          set -euo pipefail
+
+          dest=src/main/resources/web/images/block
+          work=$(mktemp -d)
+
+          curl -fsSL -o "$work/mc-assets.tar.gz" \
+            "https://codeload.github.com/Owen1212055/mc-assets/tar.gz/$MC_ASSETS_REF"
+          mkdir -p "$work/raw" "$dest"
+          tar xzf "$work/mc-assets.tar.gz" --strip-components=2 -C "$work/raw" \
+            --wildcards '*/item-assets/*.png'
+
+          # mc-assets names each render after the Material constant
+          # (ACACIA_BOAT.png); ItemSorter reads the filename back as a
+          # lowercase material name, so fold the case before packaging.
+          for f in "$work"/raw/*.png; do
+            base=$(basename "$f")
+            [ "$base" = "${base,,}" ] || mv -- "$f" "$work/raw/${base,,}"
+          done
+
+          mogrify -path "$dest" -resize "${ICON_SIZE}x${ICON_SIZE}" -strip "$work"/raw/*.png
+          rm -rf "$work"
+
+          echo "$(find "$dest" -name '*.png' | wc -l) item icons at ${ICON_SIZE}px from mc-assets@$MC_ASSETS_REF" \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_RELEASE }}
+          cache: maven
+
+      - name: Package
+        run: |
+          mvn -B --no-transfer-progress clean package \
+            -Drevision="$REVISION" \
+            -Dpaper.api.version="$PAPER_API_VERSION" \
+            -Djava.release="$JAVA_RELEASE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ItemSorter-${{ env.REVISION }}
+          path: output/ItemSorter-${{ env.REVISION }}.jar
+          if-no-files-found: error

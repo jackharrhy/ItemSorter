@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Minecraft version this jar targets -- pom <revision>, also names the jar'
+        required: false
+        type: string
+        default: '26.2'
+      paper_api_version:
+        description: 'paper-api coordinate -- pom <paper.api.version>. 26.x is <mc>.build.<n>-stable, 1.x is <mc>-R0.1-SNAPSHOT'
+        required: false
+        type: string
+        default: '26.2.build.123-stable'
+      java_release:
+        description: 'Bytecode level the server must load -- pom <java.release>. 26.x needs 25, 1.20.5-1.21.x need 21, older need 17'
+        required: false
+        type: string
+        default: '25'
+      tag:
+        description: 'Release tag to create or update (e.g. v6.4)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark the release as a pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      revision: ${{ inputs.revision || '26.2' }}
+      paper_api_version: ${{ inputs.paper_api_version || '26.2.build.123-stable' }}
+      java_release: ${{ inputs.java_release || '25' }}
+
+  release:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ItemSorter-*
+          path: dist
+          merge-multiple: true
+
+      - name: List jars
+        run: ls -lh dist
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          PRERELEASE: ${{ inputs.prerelease || false }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.jar --clobber
+          else
+            args=(--generate-notes --title "$TAG")
+            if [ "$PRERELEASE" = 'true' ]; then
+              args+=(--prerelease)
+            fi
+            gh release create "$TAG" dist/*.jar "${args[@]}"
+          fi

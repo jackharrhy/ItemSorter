@@ -4,10 +4,18 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tollenaar.stephen</groupId>
 	<artifactId>ItemSorter</artifactId>
-    <version>1.21.7</version>
+    <!-- ${revision} is the Minecraft version this jar targets. Override per build:
+	     mvn package -Drevision=1.21.1 -Djava.release=21 -->
+    <version>${revision}</version>
 	<packaging>jar</packaging>
 	<name>ItemSorter</name>
 	<properties>
+        <!-- Minecraft version this jar targets; names the output file. -->
+        <revision>26.2</revision>
+        <!-- Full paper-api coordinate: 26.x builds are <mc>.build.<n>-stable,
+             1.x releases are <mc>-R0.1-SNAPSHOT. -->
+        <paper.api.version>26.2.build.123-stable</paper.api.version>
+        <java.release>25</java.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <output>output</output>
 	</properties>
@@ -37,10 +45,9 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+                <version>3.13.0</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+                    <release>${java.release}</release>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -55,7 +62,7 @@
 						</goals>
 						<configuration>
 							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<outputFile>${output}\${project.name}.jar</outputFile>
+                            <outputFile>${output}/${project.name}-${revision}.jar</outputFile>
 							<outputDirectory>${output}</outputDirectory>
 						</configuration>
 
@@ -88,8 +95,8 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>destroystokyo-repo</id>
-			<url>https://repo.destroystokyo.com/repository/maven-public/</url>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
 		</repository>
 		<repository>
 			<id>sonatype</id>
@@ -100,7 +107,7 @@
 		<dependency>
 			<groupId>io.papermc.paper</groupId>
 			<artifactId>paper-api</artifactId>
-            <version>1.21.7-R0.1-SNAPSHOT</version>
+            <version>${paper.api.version}</version>
             <scope>provided</scope>
 		</dependency>
 		<dependency>
