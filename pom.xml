@@ -32,7 +32,7 @@
 				<includes>
 					<include>*.yml</include>
 					<include>*.txt</include>
-					<include>web/index.html</include>
+					<include>itemsorter-web/index.html</include>
 				</includes>
 			</resource>
 			<resource>
@@ -41,7 +41,7 @@
 				<excludes>
 					<exclude>*.yml</exclude>
 					<exclude>*.txt</exclude>
-					<exclude>web/index.html</exclude>
+					<exclude>itemsorter-web/index.html</exclude>
 				</excludes>
 			</resource>
 		</resources>

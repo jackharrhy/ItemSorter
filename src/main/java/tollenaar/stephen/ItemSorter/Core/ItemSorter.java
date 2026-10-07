@@ -75,7 +75,7 @@ public class ItemSorter extends JavaPlugin {
                 if (en.getName().contains("images/block/") && en.getName().split("images/block/").length > 1) {
                     // Formatting name and getting the max itemstack size
                     // Filtering out disabled items as well
-                    String name = en.getName().replace("web/images/block/", "").replace(".png", "");
+                    String name = en.getName().replace("itemsorter-web/images/block/", "").replace(".png", "");
                     boolean cont = false;
                     for (String disabled : config.getStringList("disabledItems")) {
                         if (name.contains(disabled)) {
@@ -141,7 +141,7 @@ public class ItemSorter extends JavaPlugin {
      * @param pluginConfig  - the plugin's config.yml.
      */
     static void configureWebServer(JavalinConfig javalinConfig, FileConfiguration pluginConfig) {
-        javalinConfig.addStaticFiles("web", Location.CLASSPATH);
+        javalinConfig.addStaticFiles("itemsorter-web", Location.CLASSPATH);
         javalinConfig.showJavalinBanner = false;
         javalinConfig.maxRequestSize = 30000L;
         javalinConfig.contextPath = pluginConfig.getString("contextPath", "/");
@@ -177,7 +177,7 @@ public class ItemSorter extends JavaPlugin {
 
         appItem.get("/", ctx -> {
             ctx.attribute("response", "You're not supposed to be here!!");
-            ctx.render("/web/response.html");
+            ctx.render("/itemsorter-web/response.html");
         });
     }
 

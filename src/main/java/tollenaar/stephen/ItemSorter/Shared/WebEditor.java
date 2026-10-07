@@ -8,7 +8,7 @@ import io.javalin.http.staticfiles.Location;
 public final class WebEditor {
     private WebEditor() {}
     public static void configure(JavalinConfig config, String contextPath) {
-        config.addStaticFiles("web", Location.CLASSPATH);
+        config.addStaticFiles("itemsorter-web", Location.CLASSPATH);
         config.showJavalinBanner = false;
         config.maxRequestSize = 30000L;
         config.contextPath = contextPath;
@@ -33,7 +33,7 @@ public final class WebEditor {
             }
             ctx.attribute("token", token);
             ctx.attribute("postAction", "." + postPath);
-            ctx.render("/web/index.html");
+            ctx.render("/itemsorter-web/index.html");
         });
         app.post(postPath, ctx -> {
             ctx.header("Cache-Control", "no-store");
@@ -54,7 +54,7 @@ public final class WebEditor {
                 return;
             }
             ctx.attribute("response", "Thank you. You can close this page now.");
-            ctx.render("/web/response.html");
+            ctx.render("/itemsorter-web/response.html");
         });
     }
 

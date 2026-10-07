@@ -156,7 +156,7 @@ public final class ItemSorterFabric implements DedicatedServerModInitializer {
     private Map<String, List<Item>> catalog() throws Exception {
         var items = new ArrayList<Item>();
         var root = FabricLoader.getInstance().getModContainer("itemsorter").orElseThrow().getRootPaths().getFirst();
-        try (var paths = Files.list(root.resolve("web/images/block"))) {
+        try (var paths = Files.list(root.resolve("itemsorter-web/images/block"))) {
             for (Path icon : paths.toList()) {
                 String name = icon.getFileName().toString().replace(".png", "");
                 var id = Identifier.tryParse(name);

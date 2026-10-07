@@ -27,7 +27,7 @@ sourceSets {
     }
     test { java { srcDir '../src/test/java'; include '**/Shared/**', '**/fabric/**' } }
 }
-processResources { filesMatching('web/index.html') { filter { it.replace('${maxInputItems}', '100') } } }
+processResources { filesMatching('itemsorter-web/index.html') { filter { it.replace('${maxInputItems}', '100') } } }
 shadowJar {
     configurations = [project.configurations.webLibraries]
     archiveClassifier = ''

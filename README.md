@@ -13,6 +13,9 @@ mvn clean package
 ```
 
 Generated icons are restored from a checksum-pinned upstream release, not committed. Both jars include them.
+Templates and assets live under the private `itemsorter-web` classpath namespace,
+so mods such as AudioPlayer cannot supply the editor's `index.html`. Public
+editor, CSS, script and icon URLs are unchanged on both platforms.
 
 - Paper: `output/ItemSorter-26.2.jar`, installed under `plugins/`.
 - Fabric: `fabric/build/libs/ItemSorter-Fabric-26.2.jar`, installed under `mods/`, with Fabric Loader 0.19.5 and Fabric API 0.161.0+26.2.
@@ -24,6 +27,10 @@ and leaves Minecraft-owned Gson/SLF4J out. This allows other mods such as
 Storefront to bundle different web-library versions in the same classloader.
 The Storefront repository's `dev/combined-web-classpath.py` checks both shipped
 jars together over HTTP in both classpath orders, without launching Minecraft.
+Pass AudioPlayer's runtime jar as the optional third argument to reproduce
+shared-classpath resource collisions; the harness puts it first and verifies
+the Hopper Configuration root, CSS, icons and authorized templates at `/` and
+under a context prefix.
 
 ## Use
 

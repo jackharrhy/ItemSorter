@@ -19,7 +19,7 @@ with zipfile.ZipFile(io.BytesIO(data)) as release:
         if name.startswith('web/images/block/') and name.endswith('.png'):
             if len(Path(name).parts) != 4:
                 raise SystemExit('Unexpected icon path')
-            target = root / name
+            target = root / name.replace('web/', 'itemsorter-web/', 1)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(release.read(name))
             count += 1
