@@ -18,6 +18,13 @@ Generated icons are restored from a checksum-pinned upstream release, not commit
 - Fabric: `fabric/build/libs/ItemSorter-Fabric-26.2.jar`, installed under `mods/`, with Fabric Loader 0.19.5 and Fabric API 0.161.0+26.2.
 - Do not install the thin or smoke jars on a normal server.
 
+The Fabric runtime jar privately relocates Javalin, Kotlin, Jetty/servlet and the
+Thymeleaf stack (including OGNL/Javassist), merges relocated service descriptors,
+and leaves Minecraft-owned Gson/SLF4J out. This allows other mods such as
+Storefront to bundle different web-library versions in the same classloader.
+The Storefront repository's `dev/combined-web-classpath.py` checks both shipped
+jars together over HTTP in both classpath orders, without launching Minecraft.
+
 ## Use
 
 Attach an item frame to a hopper. Right-click its empty frame with a book and quill to receive a clickable editor link. Select filters, submit, and the frame receives a vanilla written configuration book. Right-click a configured frame or held configuration book for editing. Keep the player online while saving; links expire after ten minutes, are single-use on submission, and are replaced by the next link for that player.

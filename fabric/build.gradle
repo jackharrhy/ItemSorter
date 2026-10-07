@@ -31,6 +31,19 @@ processResources { filesMatching('web/index.html') { filter { it.replace('${maxI
 shadowJar {
     configurations = [project.configurations.webLibraries]
     archiveClassifier = ''
+    dependencies { exclude(dependency('org.slf4j:.*:.*')); exclude(dependency('com.google.code.gson:.*:.*')) }
+    filesMatching('META-INF/services/**') { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
+    mergeServiceFiles()
+    relocate 'io.javalin', 'tollenaar.stephen.ItemSorter.internal.javalin'
+    relocate 'kotlin', 'tollenaar.stephen.ItemSorter.internal.kotlin'
+    relocate 'org.eclipse.jetty', 'tollenaar.stephen.ItemSorter.internal.jetty'
+    relocate 'javax.servlet', 'tollenaar.stephen.ItemSorter.internal.servlet'
+    relocate 'org.thymeleaf', 'tollenaar.stephen.ItemSorter.internal.thymeleaf'
+    relocate 'org.attoparser', 'tollenaar.stephen.ItemSorter.internal.attoparser'
+    relocate 'org.unbescape', 'tollenaar.stephen.ItemSorter.internal.unbescape'
+    relocate 'ognl', 'tollenaar.stephen.ItemSorter.internal.ognl'
+    relocate 'javassist', 'tollenaar.stephen.ItemSorter.internal.javassist'
+    relocate 'org.objectweb.asm', 'tollenaar.stephen.ItemSorter.internal.asm'
     exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'module-info.class', 'META-INF/versions/*/module-info.class'
 }
 jar { archiveClassifier = 'thin' }
