@@ -117,6 +117,25 @@ public class HopperInteractHandler implements Listener {
 	}
 
     @EventHandler
+    public void onEntitiesLoad(org.bukkit.event.world.EntitiesLoadEvent event) {
+        for (var entity : event.getEntities()) {
+            if (!(entity instanceof ItemFrame frame)) continue;
+            var hopper = frame.getLocation().getBlock().getRelative(frame.getAttachedFace());
+            if (hopper.getType() != Material.HOPPER) continue;
+            var item = frame.getItem();
+            try {
+                if (!Book.makePortable(item, new NamespacedKey("itemsorter", "itemsorter"))) continue;
+                frame.setItem(item);
+                database.saveHoppers(hopper.getLocation(), frame.getLocation());
+                int id = (int) database.getSavedItemFrameByLocation(frame.getLocation(), "id");
+                Book.fromString(item.getItemMeta().getPersistentDataContainer().get(new NamespacedKey("itemsorter", "itemsorter"), PersistentDataType.STRING)).addSelf(id);
+            } catch (ClassNotFoundException | IOException | IllegalArgumentException invalid) {
+                plugin.getLogger().warning("Could not read ItemSorter book at " + frame.getLocation());
+            }
+        }
+    }
+
+    @EventHandler
     public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
         plugin.getWebSessions().revoke(event.getPlayer().getUniqueId());
         database.deleteEditHopper(event.getPlayer().getUniqueId());

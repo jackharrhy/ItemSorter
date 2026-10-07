@@ -95,7 +95,7 @@ public class HopperConfiguring {
 
 		// changing the item frame item
 		NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
-		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
+		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toPortable().encode());
 		replaceItem.setItemMeta(meta);
 		fr.setItem(replaceItem);
 	}
@@ -148,7 +148,7 @@ public class HopperConfiguring {
 
 		// changing the item frame item
 		NamespacedKey key = new NamespacedKey(plugin, "itemsorter");
-		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toString());
+		meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, book.toPortable().encode());
 
 		meta.pages(Text.legacy(book.toPages()));
 		

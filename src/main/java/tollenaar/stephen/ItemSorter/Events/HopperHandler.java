@@ -33,10 +33,16 @@ public class HopperHandler implements Listener {
         Location down = hopper.getRelative(BlockFace.DOWN).getLocation();
 
         // Handle hopper junctions and multiple items in the same inventory slot
+        if (hopper.getType() != Material.HOPPER) {
+            filterDestination(event);
+            return;
+        }
         if (hopper.getType() == Material.HOPPER) {
             Integer hopperID = getHopperID(down);
-            if (hopperID == null)
+            if (hopperID == null) {
+                filterDestination(event);
                 return;
+            }
 
             Frame frame = getFrameByHopperID(hopperID);
             if (frame == null)
@@ -66,6 +72,20 @@ public class HopperHandler implements Listener {
 
             // Standard item filtering and linked hopper logic
             handleStandardItemFiltering(event, hopper, book, junctionCancelled);
+        }
+    }
+
+    private void filterDestination(InventoryMoveItemEvent event) {
+        Location destination = event.getDestination().getLocation();
+        if (destination == null || destination.getBlock().getType() != Material.HOPPER) return;
+        Integer id = getHopperID(destination);
+        if (id == null) return;
+        Frame frame = getFrameByHopperID(id);
+        if (frame == null) return;
+        Book book = Book.getBook(frame.getId());
+        if (book != null && !book.allowItem(event.getDestination(), event.getItem())) {
+            if (book.isLinkedBelow()) handleLinkedHopperLogic(event, destination.getBlock(), book);
+            else event.setCancelled(true);
         }
     }
 

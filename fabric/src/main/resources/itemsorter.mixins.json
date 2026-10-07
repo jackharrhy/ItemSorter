@@ -1,0 +1,1 @@
+{"required":true,"package":"tollenaar.stephen.ItemSorter.fabric.mixin","compatibilityLevel":"JAVA_25","mixins":["HopperMixin"],"injectors":{"defaultRequire":1}}

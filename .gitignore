@@ -3,3 +3,6 @@
 /output/
 images/block
 output/ItemSorter.jar
+.gradle/
+**/build/
+**/logs/

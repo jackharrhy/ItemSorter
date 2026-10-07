@@ -73,4 +73,17 @@ class BookTest {
         assertTrue(book.hasPotion(List.of(new PotionEffect(PotionEffectType.SPEED, 200, 0))));
         assertFalse(book.hasPotion(List.of(new PotionEffect(PotionEffectType.SLOWNESS, 200, 0))));
     }
+    @Test void strictEnchantmentFilterRejectsAdditionalEnchantments() {
+        var book = new Book(FRAME_ID);
+        book.addEnchantment(org.bukkit.enchantments.Enchantment.SHARPNESS);
+        book.setStrictMode(true);
+        var enchantments = new java.util.LinkedHashSet<org.bukkit.enchantments.Enchantment>();
+        enchantments.add(org.bukkit.enchantments.Enchantment.SHARPNESS);
+        enchantments.add(org.bukkit.enchantments.Enchantment.SMITE);
+        assertFalse(book.hasEnchantment(enchantments));
+        var item = new ItemStack(Material.DIAMOND_SWORD);
+        item.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.SHARPNESS, 1);
+        item.addUnsafeEnchantment(org.bukkit.enchantments.Enchantment.SMITE, 1);
+        assertFalse(book.allowItem(hopperInventory(), item));
+    }
 }

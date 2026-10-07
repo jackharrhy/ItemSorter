@@ -1,4 +1,5 @@
 verboseLogging: false
+host: '0.0.0.0'
 port: 7001
 URL: "http://localhost:7001/"
 # Path the web pages are served under, for example '/itemsorter'. When you set

@@ -1,0 +1,49 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+    id 'com.gradleup.shadow' version '9.4.0'
+}
+version = '26.2'
+group = 'tollenaar.stephen'
+base { archivesName = 'ItemSorter-Fabric' }
+repositories { mavenCentral() }
+loom { serverOnlyMinecraftJar() }
+configurations { webLibraries }
+configurations.implementation.extendsFrom(configurations.webLibraries)
+dependencies {
+    minecraft 'com.mojang:minecraft:26.2'
+    implementation 'net.fabricmc:fabric-loader:0.19.5'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.161.0+26.2'
+    webLibraries 'io.javalin:javalin:4.5.0'
+    webLibraries 'org.thymeleaf:thymeleaf:3.0.9.RELEASE'
+    testImplementation 'org.junit.jupiter:junit-jupiter:6.1.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.3'
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(26) } }
+tasks.withType(JavaCompile).configureEach { options.release = 25 }
+sourceSets {
+    main {
+        java { srcDir '../src/main/java'; include '**/Shared/**', '**/Util/Web/HopperItems.java', '**/Util/Web/Ratio.java', '**/Util/Web/Item.java', '**/fabric/**' }
+        resources { srcDir '../src/main/resources'; exclude 'plugin.yml', 'config.yml', 'META-INF/MANIFEST.MF' }
+    }
+    test { java { srcDir '../src/test/java'; include '**/Shared/**', '**/fabric/**' } }
+}
+processResources { filesMatching('web/index.html') { filter { it.replace('${maxInputItems}', '100') } } }
+shadowJar {
+    configurations = [project.configurations.webLibraries]
+    archiveClassifier = ''
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'module-info.class', 'META-INF/versions/*/module-info.class'
+}
+jar { archiveClassifier = 'thin' }
+test { useJUnitPlatform() }
+build.dependsOn shadowJar
+sourceSets {
+    smoke {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+tasks.register('smokeJar', Jar) {
+    dependsOn smokeClasses
+    from sourceSets.smoke.output
+    archiveBaseName = 'itemsorter-smoke'
+}

@@ -177,4 +177,28 @@ class HopperHandlerTest {
         assertFalse(event.isCancelled());
         verify(database, times(2)).getSavedItemFrameByHopperID(2, "id");
     }
+    @Test void standaloneConfiguredHopperFiltersIncomingTransfers() {
+        Block source = hopper(0, 64, 0, BlockFace.EAST, true);
+        Block destination = hopper(1, 64, 0, BlockFace.DOWN, true);
+        saveHopper(destination, 2, 20);
+        book(20).addInputConfig(Material.STONE);
+        var rejected = move(source, Material.DIRT, destination);
+        handler.onHopperInputEvent(rejected);
+        assertTrue(rejected.isCancelled());
+        var accepted = move(source, Material.STONE, destination);
+        handler.onHopperInputEvent(accepted);
+        assertFalse(accepted.isCancelled());
+    }
+    @Test void configuredHopperAlsoFiltersItemsPulledFromAChest() {
+        Block chest = world.getBlockAt(1, 65, 0);
+        chest.setType(Material.CHEST);
+        Inventory source = spy(((org.bukkit.block.Chest) chest.getState()).getInventory());
+        doReturn(chest.getLocation()).when(source).getLocation();
+        Block destination = hopper(1, 64, 0, BlockFace.DOWN, true);
+        saveHopper(destination, 2, 20);
+        book(20).addInputConfig(Material.STONE);
+        var event = new InventoryMoveItemEvent(source, new ItemStack(Material.DIRT), inventory(destination), false);
+        handler.onHopperInputEvent(event);
+        assertTrue(event.isCancelled());
+    }
 }

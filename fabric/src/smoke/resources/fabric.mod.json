@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"itemsorter_smoke","version":"1","name":"ItemSorter smoke fixture","environment":"server","entrypoints":{"server":["tollenaar.stephen.ItemSorter.fabric.SmokeTest"]},"depends":{"itemsorter":"*","fabric-api":"*"}}

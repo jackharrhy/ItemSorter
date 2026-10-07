@@ -72,6 +72,8 @@ public final class Book implements Serializable {
     private boolean linkedBelow;
     private Ratio ratio;
 
+    private Book() {}
+
     public Book(int frameID) {
         this.frameID = frameID;
         this.addSelf(frameID);
@@ -90,15 +92,9 @@ public final class Book implements Serializable {
 
     // checking if the item has the correct enchantment
     public boolean hasEnchantment(Set<Enchantment> enchantment) {
-        for (Enchantment ent : enchantment) {
-            if (isStrictMode() && !enchantments.contains(ent.getKey().getKey())) {
-                return false;
-            }
-            if (enchantments.contains(ent.getKey().getKey())) {
-                return true;
-            }
-        }
-        return false;
+        var names = enchantment.stream().map(ent -> ent.getKey().getKey()).collect(java.util.stream.Collectors.toSet());
+        return !java.util.Collections.disjoint(enchantments, names)
+                && (!strictMode || enchantments.containsAll(names));
     }
 
     // checking if the item has the correct potion effect
@@ -196,16 +192,11 @@ public final class Book implements Serializable {
     }
 
     public boolean allowItem(Inventory inventory, ItemStack item) {
-        // filtering the items
-        if (!inputConfig.isEmpty() && !hasInputConfig(item.getType())) {
-            return false;
-        } else if (item.getItemMeta().hasEnchants() && !enchantments.isEmpty()
-                && !hasEnchantment(item.getItemMeta().getEnchants().keySet())) {
-            return false;
-        } else if (item.getItemMeta() instanceof PotionMeta && ((PotionMeta) item.getItemMeta()).hasCustomEffects()
-                && !potions.isEmpty() && !hasPotion(((PotionMeta) item.getItemMeta()).getCustomEffects())) {
-            return false;
-        }
+        var names = item.getEnchantments().keySet().stream().map(ent -> ent.getKey().getKey()).collect(java.util.stream.Collectors.toSet());
+        var effects = item.getItemMeta() instanceof PotionMeta potion
+                ? potion.getCustomEffects().stream().map(effect -> effect.getType().getKey().getKey()).toList()
+                : List.<String>of();
+        if (!toPortable().allows(item.getType().name().toLowerCase(java.util.Locale.ROOT), names, effects)) return false;
 
         // prevents accepting an item if the next container in the system is full
         if (hasPreventOverflow()) {
@@ -268,6 +259,24 @@ public final class Book implements Serializable {
         this.inputConfig.clear();
         this.enchantments.clear();
         this.potions.clear();
+    }
+
+    public static boolean makePortable(ItemStack item, org.bukkit.NamespacedKey key) throws IOException, ClassNotFoundException {
+        if (item == null || item.getType() != Material.WRITTEN_BOOK) return false;
+        var meta = item.getItemMeta();
+        String value = meta.getPersistentDataContainer().get(key, org.bukkit.persistence.PersistentDataType.STRING);
+        if (value == null) return false;
+        var book = fromString(value);
+        meta.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.STRING, book.toPortable().encode());
+        item.setItemMeta(meta);
+        return true;
+    }
+
+    public tollenaar.stephen.ItemSorter.Shared.FilterConfig toPortable() {
+        return new tollenaar.stephen.ItemSorter.Shared.FilterConfig(1,
+                inputConfig.stream().map(material -> material.name().toLowerCase(java.util.Locale.ROOT)).toList(),
+                enchantments, potions, strictMode, preventOverflow, linkedBelow,
+                ratio == null ? null : ratio.getFirst(), ratio == null ? null : ratio.getSecond());
     }
 
     public HopperItems toItems() {
@@ -353,7 +362,7 @@ public final class Book implements Serializable {
 
     public static Book getBook(String bookvalue) {
         for (Book book : BOOKS.values()) {
-            if (book.toString().equals(bookvalue)) {
+            if (book.toString().equals(bookvalue) || book.toPortable().encode().equals(bookvalue)) {
                 return book;
             }
         }
@@ -376,6 +385,22 @@ public final class Book implements Serializable {
 
     /** Read the object from Base64 string. */
     public static Book fromString(String s) throws IOException, ClassNotFoundException {
+        if (s.startsWith("{")) {
+            var filter = tollenaar.stephen.ItemSorter.Shared.FilterConfig.decode(s);
+            Book book = new Book();
+            for (String item : filter.items()) {
+                Material material = Material.matchMaterial(item);
+                if (material == null) throw new IllegalArgumentException("Unknown material");
+                book.addInputConfig(material);
+            }
+            book.enchantments.addAll(filter.enchantments());
+            book.potions.addAll(filter.potions());
+            book.strictMode = filter.strictMode();
+            book.preventOverflow = filter.preventOverflow();
+            book.linkedBelow = filter.linkedBelow();
+            if (filter.firstRatio() != null) book.setRatio(filter.firstRatio(), filter.secondRatio());
+            return book;
+        }
         byte[] data = Base64.getDecoder().decode(s);
         ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
         Object o;
