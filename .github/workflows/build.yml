@@ -57,7 +57,7 @@ jobs:
           # Renders of every inventory item, named after the Bukkit Material
           # constant. Pin a commit SHA here for reproducible icon sets.
           MC_ASSETS_REF: main
-          # Displayed at 32px by web/css/options.css; 64 keeps HiDPI screens
+          # Displayed at 32px by itemsorter-web/css/options.css; 64 keeps HiDPI screens
           # sharp. Drop to 32 for a smaller jar, raise to 256 for the originals.
           ICON_SIZE: '64'
         run: |
@@ -67,7 +67,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq imagemagick
 
-          dest=src/main/resources/web/images/block
+          dest=src/main/resources/itemsorter-web/images/block
           work=$(mktemp -d)
 
           curl -fsSL -o "$work/mc-assets.tar.gz" \

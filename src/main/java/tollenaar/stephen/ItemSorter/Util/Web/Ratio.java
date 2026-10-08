@@ -47,20 +47,17 @@ public class Ratio implements Serializable {
 		this.count = count;
 	}
 
-	public void addCount() {
-		this.count++;
-		if (isFirstSelector()) {
-			if (getCount() >= getFirst()) {
-				setCount(0);
-				setFirstSelector(false);
-			}
-		} else {
-			if (getCount() >= getSecond()) {
-				setCount(0);
-				setFirstSelector(true);
-			}
-		}
-	}
+    public boolean allows(boolean output, boolean below) {
+        return firstSelector ? output : below;
+    }
+
+    public void addCount() {
+        count++;
+        if (count >= (firstSelector ? first : second)) {
+            count = 0;
+            firstSelector = !firstSelector;
+        }
+    }
 
 	public void reverseCount() {
 		this.count--;

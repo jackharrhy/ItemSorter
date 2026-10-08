@@ -1,14 +1,10 @@
 package tollenaar.stephen.ItemSorter.Core;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -25,7 +21,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import io.javalin.Javalin;
 import io.javalin.core.JavalinConfig;
 import io.javalin.http.Handler;
-import io.javalin.http.staticfiles.Location;
 import tollenaar.stephen.ItemSorter.Commands.CommandsHandler;
 import tollenaar.stephen.ItemSorter.Events.HopperHandler;
 import tollenaar.stephen.ItemSorter.Events.HopperInteractHandler;
@@ -141,10 +136,7 @@ public class ItemSorter extends JavaPlugin {
      * @param pluginConfig  - the plugin's config.yml.
      */
     static void configureWebServer(JavalinConfig javalinConfig, FileConfiguration pluginConfig) {
-        javalinConfig.addStaticFiles("itemsorter-web", Location.CLASSPATH);
-        javalinConfig.showJavalinBanner = false;
-        javalinConfig.maxRequestSize = 30000L;
-        javalinConfig.contextPath = pluginConfig.getString("contextPath", "/");
+        tollenaar.stephen.ItemSorter.Shared.WebEditor.configure(javalinConfig, pluginConfig.getString("contextPath", "/"));
     }
 
     private void appItemInitalize() {

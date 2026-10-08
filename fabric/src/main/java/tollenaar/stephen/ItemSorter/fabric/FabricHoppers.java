@@ -48,7 +48,7 @@ public final class FabricHoppers {
                 if (ratio != null) {
                     var upper = (HopperBlockEntity) source;
                     boolean below = destination instanceof HopperBlockEntity lower && lower.getBlockPos().equals(upper.getBlockPos().below());
-                    if (ratio.isFirstSelector() == below) return false;
+                    if (!ratio.allows(!below, below)) return false;
                 }
             } catch (IllegalArgumentException invalid) { return false; }
         }

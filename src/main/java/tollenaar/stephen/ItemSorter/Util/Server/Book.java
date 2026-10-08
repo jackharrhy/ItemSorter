@@ -36,6 +36,7 @@ import org.bukkit.potion.PotionEffectType;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
+import tollenaar.stephen.ItemSorter.Shared.FilterConfig;
 import tollenaar.stephen.ItemSorter.Util.Text;
 import tollenaar.stephen.ItemSorter.Util.Web.HopperItems;
 import tollenaar.stephen.ItemSorter.Util.Web.Ratio;
@@ -93,29 +94,12 @@ public final class Book implements Serializable {
     // checking if the item has the correct enchantment
     public boolean hasEnchantment(Set<Enchantment> enchantment) {
         var names = enchantment.stream().map(ent -> ent.getKey().getKey()).collect(java.util.stream.Collectors.toSet());
-        return !java.util.Collections.disjoint(enchantments, names)
-                && (!strictMode || enchantments.containsAll(names));
+        return toPortable().matchesEnchantments(names);
     }
 
     // checking if the item has the correct potion effect
     public boolean hasPotion(List<PotionEffect> potion) {
-        for (PotionEffect pot : potion) {
-            if (containsPotion(pot.getType().getKey().getKey())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // Configurations saved before the move to registry keys stored the old
-    // uppercase PotionEffectType names, so accept either spelling.
-    private boolean containsPotion(String key) {
-        for (String stored : potions) {
-            if (stored.equalsIgnoreCase(key)) {
-                return true;
-            }
-        }
-        return false;
+        return toPortable().matchesPotions(potion.stream().map(effect -> effect.getType().getKey().getKey()).toList());
     }
 
     public List<String> toPages() {
@@ -227,16 +211,10 @@ public final class Book implements Serializable {
     // sorting the correct move detail
     public boolean allowedMove(Inventory destination, Block hopper) {
         BlockFace facing = ((Hopper) hopper.getBlockData()).getFacing();
-        if (ratio.isFirstSelector() && hopper.getRelative(facing).getLocation().equals(destination.getLocation())) {
-            ratio.addCount();
-            return true;
-        } else if (!ratio.isFirstSelector()
-                && hopper.getRelative(BlockFace.DOWN).getLocation().equals(destination.getLocation())) {
-            ratio.addCount();
-            return true;
-        } else {
-            return false;
-        }
+        if (!ratio.allows(hopper.getRelative(facing).getLocation().equals(destination.getLocation()),
+                hopper.getRelative(BlockFace.DOWN).getLocation().equals(destination.getLocation()))) return false;
+        ratio.addCount();
+        return true;
     }
 
     private String getDisplayName(Material material) {
@@ -272,8 +250,8 @@ public final class Book implements Serializable {
         return true;
     }
 
-    public tollenaar.stephen.ItemSorter.Shared.FilterConfig toPortable() {
-        return new tollenaar.stephen.ItemSorter.Shared.FilterConfig(1,
+    public FilterConfig toPortable() {
+        return new FilterConfig(1,
                 inputConfig.stream().map(material -> material.name().toLowerCase(java.util.Locale.ROOT)).toList(),
                 enchantments, potions, strictMode, preventOverflow, linkedBelow,
                 ratio == null ? null : ratio.getFirst(), ratio == null ? null : ratio.getSecond());
@@ -383,24 +361,36 @@ public final class Book implements Serializable {
         BOOKS.remove(frameID);
     }
 
+    public static Book fromPortable(FilterConfig filter) {
+        Book book = new Book();
+        for (String item : filter.items()) {
+            Material material = Material.matchMaterial(item);
+            if (material == null) throw new IllegalArgumentException("Unknown material");
+            book.addInputConfig(material);
+        }
+        book.enchantments.addAll(filter.enchantments());
+        book.potions.addAll(filter.potions());
+        book.strictMode = filter.strictMode();
+        book.preventOverflow = filter.preventOverflow();
+        book.linkedBelow = filter.linkedBelow();
+        if (filter.firstRatio() != null) book.setRatio(filter.firstRatio(), filter.secondRatio());
+        return book;
+    }
+
+    public ItemStack toItem(org.bukkit.NamespacedKey key) {
+        ItemStack item = new ItemStack(Material.WRITTEN_BOOK);
+        var meta = (org.bukkit.inventory.meta.BookMeta) item.getItemMeta();
+        meta.setTitle("HopperConfiguration");
+        meta.setAuthor("ItemSorter");
+        meta.pages(Text.legacy(toPages()));
+        meta.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.STRING, toPortable().encode());
+        item.setItemMeta(meta);
+        return item;
+    }
+
     /** Read the object from Base64 string. */
     public static Book fromString(String s) throws IOException, ClassNotFoundException {
-        if (s.startsWith("{")) {
-            var filter = tollenaar.stephen.ItemSorter.Shared.FilterConfig.decode(s);
-            Book book = new Book();
-            for (String item : filter.items()) {
-                Material material = Material.matchMaterial(item);
-                if (material == null) throw new IllegalArgumentException("Unknown material");
-                book.addInputConfig(material);
-            }
-            book.enchantments.addAll(filter.enchantments());
-            book.potions.addAll(filter.potions());
-            book.strictMode = filter.strictMode();
-            book.preventOverflow = filter.preventOverflow();
-            book.linkedBelow = filter.linkedBelow();
-            if (filter.firstRatio() != null) book.setRatio(filter.firstRatio(), filter.secondRatio());
-            return book;
-        }
+        if (s.startsWith("{")) return fromPortable(FilterConfig.decode(s));
         byte[] data = Base64.getDecoder().decode(s);
         ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
         Object o;

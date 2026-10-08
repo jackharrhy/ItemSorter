@@ -25,7 +25,7 @@ sourceSets {
         java { srcDir '../src/main/java'; include '**/Shared/**', '**/Util/Web/HopperItems.java', '**/Util/Web/Ratio.java', '**/Util/Web/Item.java', '**/fabric/**' }
         resources { srcDir '../src/main/resources'; exclude 'plugin.yml', 'config.yml', 'META-INF/MANIFEST.MF' }
     }
-    test { java { srcDir '../src/test/java'; include '**/Shared/**', '**/fabric/**' } }
+    test { java { srcDir '../src/test/java'; include '**/Shared/**', '**/fabric/**', '**/Util/Web/RatioTest.java' } }
 }
 processResources { filesMatching('itemsorter-web/index.html') { filter { it.replace('${maxInputItems}', '100') } } }
 shadowJar {

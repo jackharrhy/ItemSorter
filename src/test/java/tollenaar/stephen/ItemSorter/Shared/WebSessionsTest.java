@@ -1,6 +1,6 @@
-package tollenaar.stephen.ItemSorter.Core;
+package tollenaar.stephen.ItemSorter.Shared;
 
-import tollenaar.stephen.ItemSorter.Core.ItemSorter.WebSessions;
+import tollenaar.stephen.ItemSorter.Shared.WebEditor.WebSessions;
 
 import org.junit.jupiter.api.Test;
 import java.util.UUID;

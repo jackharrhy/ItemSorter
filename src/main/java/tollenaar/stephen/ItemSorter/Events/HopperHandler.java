@@ -25,7 +25,6 @@ public class HopperHandler implements Listener {
 
     @EventHandler
     public void onHopperInputEvent(InventoryMoveItemEvent event) {
-        boolean junctionCancelled = false;
         Location source = event.getSource().getLocation();
         if (source == null)
             return;
@@ -37,42 +36,38 @@ public class HopperHandler implements Listener {
             filterDestination(event);
             return;
         }
-        if (hopper.getType() == Material.HOPPER) {
-            Integer hopperID = getHopperID(down);
-            if (hopperID == null) {
-                filterDestination(event);
-                return;
-            }
-
-            Frame frame = getFrameByHopperID(hopperID);
-            if (frame == null)
-                return;
-
-            Book book = Book.getBook(frame.getId());
-            if (book == null)
-                return;
-
-            // Handle junctions and disabled hoppers
-            if (Hopper.isJunction(hopper) &&
-                    !down.equals(event.getDestination().getLocation())) {
-                handleJunction(event, hopper, book);
-                return;
-            }
-
-            // Check for ratio rules if applicable
-            if (book.hasRatio() && Hopper.isJunction(hopper)) {
-                if (!book.allowedMove(event.getDestination(), hopper)) {
-                    event.setCancelled(true);
-                    return;
-                } else {
-                    event.setCancelled(false);
-                    junctionCancelled = false;
-                }
-            }
-
-            // Standard item filtering and linked hopper logic
-            handleStandardItemFiltering(event, hopper, book, junctionCancelled);
+        Integer hopperID = getHopperID(down);
+        if (hopperID == null) {
+            filterDestination(event);
+            return;
         }
+
+        Frame frame = getFrameByHopperID(hopperID);
+        if (frame == null)
+            return;
+
+        Book book = Book.getBook(frame.getId());
+        if (book == null)
+            return;
+
+        // Handle junctions and disabled hoppers
+        if (Hopper.isJunction(hopper) &&
+                !down.equals(event.getDestination().getLocation())) {
+            handleJunction(event, hopper, book);
+            return;
+        }
+
+        // Check for ratio rules if applicable
+        if (book.hasRatio() && Hopper.isJunction(hopper)) {
+            if (!book.allowedMove(event.getDestination(), hopper)) {
+                event.setCancelled(true);
+                return;
+            }
+            event.setCancelled(false);
+        }
+
+        // Standard item filtering and linked hopper logic
+        handleStandardItemFiltering(event, hopper, book);
     }
 
     private void filterDestination(InventoryMoveItemEvent event) {
@@ -104,8 +99,7 @@ public class HopperHandler implements Listener {
         }
     }
 
-    private void handleStandardItemFiltering(InventoryMoveItemEvent event, Block hopper, Book book,
-            boolean junctionCancelled) {
+    private void handleStandardItemFiltering(InventoryMoveItemEvent event, Block hopper, Book book) {
         Location destination = event.getDestination().getLocation();
         if (destination == null || destination.getBlock().getType() != Material.HOPPER)
             return;
@@ -126,7 +120,7 @@ public class HopperHandler implements Listener {
             } else {
                 event.setCancelled(true);
             }
-        } else if (!junctionCancelled) {
+        } else {
             reverseRatioStep(event);
         }
     }

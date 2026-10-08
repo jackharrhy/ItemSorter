@@ -44,4 +44,19 @@ class RatioTest {
         assertFalse(ratio.isFirstSelector());
         assertEquals(2, ratio.getCount(), "lands on the last slot of the second side's share");
     }
+    @Test void routingAndRollbackHoldAcrossSeveralCompleteCycles() {
+        Ratio ratio = new Ratio(2, 3);
+        for (int step = 0; step < 20; step++) {
+            boolean output = step % 5 < 2;
+            assertEquals(output, ratio.allows(true, false));
+            assertEquals(!output, ratio.allows(false, true));
+            assertFalse(ratio.allows(false, false));
+            int count = ratio.getCount();
+            ratio.addCount();
+            ratio.reverseCount();
+            assertEquals(output, ratio.isFirstSelector());
+            assertEquals(count, ratio.getCount());
+            ratio.addCount();
+        }
+    }
 }

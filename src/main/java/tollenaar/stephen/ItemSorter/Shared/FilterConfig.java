@@ -23,6 +23,8 @@ public record FilterConfig(int version, List<String> items, List<String> enchant
         var potions = new ArrayList<String>();
         for (var entry : form.entrySet()) {
             if (entry.getValue().isEmpty()) throw new IllegalArgumentException("Empty choice");
+            // These are UI section toggles, not selected registry entries.
+            if (entry.getKey().equals("enchantment_blocker") || entry.getKey().equals("potion_blocker")) continue;
             String value = entry.getValue().getFirst().toLowerCase(Locale.ROOT);
             if (entry.getKey().startsWith("input_")) items.add(value);
             else if (entry.getKey().startsWith("enchantment_")) enchantments.add(value);
@@ -33,18 +35,21 @@ public record FilterConfig(int version, List<String> items, List<String> enchant
             if (!form.containsKey("firstRatio") || !form.containsKey("secondRatio")) throw new IllegalArgumentException("Missing ratio");
             first = Integer.valueOf(form.get("firstRatio").getFirst());
             second = Integer.valueOf(form.get("secondRatio").getFirst());
-            if (first <= 0 || second <= 0) throw new IllegalArgumentException("Invalid ratio");
         }
         return new FilterConfig(1, items, enchantments, potions, form.containsKey("strict_mode"),
                 form.containsKey("prevent_overflow"), form.containsKey("linked_below"), first, second);
     }
     public boolean allows(String item, Set<String> itemEnchantments, List<String> itemEffects) {
         if (!items.isEmpty() && !items.contains(item)) return false;
-        if (!itemEnchantments.isEmpty() && !enchantments.isEmpty()
-                && (Collections.disjoint(enchantments, itemEnchantments)
-                    || strictMode && !enchantments.containsAll(itemEnchantments))) return false;
-        return itemEffects.isEmpty() || potions.isEmpty()
-                || itemEffects.stream().anyMatch(effect -> potions.stream().anyMatch(effect::equalsIgnoreCase));
+        if (!itemEnchantments.isEmpty() && !enchantments.isEmpty() && !matchesEnchantments(itemEnchantments)) return false;
+        return itemEffects.isEmpty() || potions.isEmpty() || matchesPotions(itemEffects);
+    }
+    public boolean matchesEnchantments(Set<String> names) {
+        return !Collections.disjoint(enchantments, names) && (!strictMode || enchantments.containsAll(names));
+    }
+    // Legacy Paper books contain uppercase effect names.
+    public boolean matchesPotions(List<String> effects) {
+        return effects.stream().anyMatch(effect -> potions.stream().anyMatch(effect::equalsIgnoreCase));
     }
     public String encode() { return JSON.toJson(this); }
     public static FilterConfig decode(String value) {
